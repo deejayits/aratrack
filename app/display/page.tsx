@@ -168,9 +168,21 @@ export default function DisplayPage() {
                 by {lastFeed.logged_by}
               </div>
               <div className="mt-4 lg:mt-auto">
-                <div className="flex justify-between text-sm md:text-lg lg:text-xl text-neutral-400 mb-2">
-                  <span>Next feed window</span>
-                  <span>
+                <div className="flex justify-between items-center text-sm md:text-lg lg:text-xl text-neutral-400 mb-2">
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={`inline-block w-2.5 h-2.5 rounded-full ${toneBar[feedTone]}`}
+                      aria-hidden
+                    />
+                    {feedTone === "red"
+                      ? "Overdue"
+                      : feedTone === "amber"
+                        ? "Soon"
+                        : feedTone === "green"
+                          ? "On track"
+                          : "No data"}
+                  </span>
+                  <span className="tabular-nums">
                     {feedAgoMin ?? 0}m / {FEED_INTERVAL_MINUTES}m
                   </span>
                 </div>

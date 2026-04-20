@@ -4,10 +4,21 @@
 
 html,
 body {
-  height: 100%;
-  background: #0a0a0a;
+  min-height: 100%;
+  background: radial-gradient(1200px 800px at 50% -10%, #151826 0%, #0a0a0a 55%, #050505 100%);
+  background-attachment: fixed;
   color: #f5f5f5;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 @keyframes pulseGlow {
