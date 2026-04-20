@@ -63,17 +63,17 @@ export default function DashboardPage() {
   }, [events]);
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100 p-6 md:p-10 max-w-5xl mx-auto">
-      <header className="flex items-center justify-between mb-8">
+    <div className="min-h-[100dvh] bg-neutral-950 text-neutral-100 p-4 md:p-8 max-w-5xl mx-auto">
+      <header className="flex items-center justify-between mb-6 md:mb-8 gap-3">
         <div>
-          <div className="text-3xl font-bold">Stats</div>
-          <div className="text-sm text-neutral-400">Last 14 days</div>
+          <div className="text-2xl md:text-3xl font-bold">Stats</div>
+          <div className="text-xs md:text-sm text-neutral-400">Last 14 days</div>
         </div>
-        <div className="flex gap-3">
-          <Link href="/log" className="text-sm px-4 py-2 rounded-full border border-neutral-700">
+        <div className="flex gap-2 md:gap-3">
+          <Link href="/log" className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-neutral-700">
             Log
           </Link>
-          <Link href="/display" className="text-sm px-4 py-2 rounded-full border border-neutral-700">
+          <Link href="/display" className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-neutral-700">
             Display
           </Link>
         </div>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
 
       {!loading && !err && (
         <>
-          <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
             <Tile label="Today feeds" value={`${today?.feedCount ?? 0}`} sub={`${fmtOz(today?.totalOz ?? 0)} oz`} />
             <Tile label="Today diapers" value={`${today?.diaperCount ?? 0}`} sub={`${today?.wet ?? 0}W ${today?.dirty ?? 0}D ${today?.both ?? 0}B`} />
             <Tile
@@ -99,7 +99,7 @@ export default function DashboardPage() {
             <Tile label="14d totals" value={`${totals.feeds} feeds`} sub={`${fmtOz(totals.totalOz)} oz · ${totals.diapers} diapers`} />
           </section>
 
-          <section className="bg-neutral-900 rounded-3xl p-6 mb-6">
+          <section className="bg-neutral-900 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-6">
             <div className="text-sm text-neutral-400 mb-3">Feeds per day (last 7)</div>
             <BarChart
               data={days7.map((d) => ({ label: d.label.split(" ")[0], value: d.feedCount }))}
@@ -107,7 +107,7 @@ export default function DashboardPage() {
             />
           </section>
 
-          <section className="bg-neutral-900 rounded-3xl p-6 mb-6">
+          <section className="bg-neutral-900 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-6">
             <div className="text-sm text-neutral-400 mb-3">Oz per day (last 7)</div>
             <BarChart
               data={days7.map((d) => ({ label: d.label.split(" ")[0], value: Math.round(d.totalOz * 10) / 10 }))}
@@ -116,7 +116,7 @@ export default function DashboardPage() {
             />
           </section>
 
-          <section className="bg-neutral-900 rounded-3xl p-6 mb-6">
+          <section className="bg-neutral-900 rounded-2xl md:rounded-3xl p-4 md:p-6 mb-4 md:mb-6">
             <div className="text-sm text-neutral-400 mb-3">Diapers per day (last 7)</div>
             <BarChart
               data={days7.map((d) => ({ label: d.label.split(" ")[0], value: d.diaperCount }))}
@@ -124,7 +124,7 @@ export default function DashboardPage() {
             />
           </section>
 
-          <section className="bg-neutral-900 rounded-3xl p-6">
+          <section className="bg-neutral-900 rounded-2xl md:rounded-3xl p-4 md:p-6">
             <div className="text-sm text-neutral-400 mb-3">Recent events</div>
             <div className="divide-y divide-neutral-800">
               {events.slice(0, 25).map((e) => (
@@ -154,10 +154,10 @@ export default function DashboardPage() {
 
 function Tile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="bg-neutral-900 rounded-2xl p-4">
-      <div className="text-xs uppercase tracking-wider text-neutral-500">{label}</div>
-      <div className="text-3xl font-semibold mt-1">{value}</div>
-      {sub && <div className="text-xs text-neutral-400 mt-1">{sub}</div>}
+    <div className="bg-neutral-900 rounded-2xl p-3 md:p-4">
+      <div className="text-[10px] md:text-xs uppercase tracking-wider text-neutral-500">{label}</div>
+      <div className="text-xl md:text-3xl font-semibold mt-1">{value}</div>
+      {sub && <div className="text-[11px] md:text-xs text-neutral-400 mt-1">{sub}</div>}
     </div>
   );
 }

@@ -84,18 +84,18 @@ export default function LogPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-neutral-950 text-neutral-100">
-      <div className="flex justify-end px-5 pt-4 gap-3">
-        <Link href="/dashboard" className="text-sm text-neutral-500 hover:text-neutral-200">
-          stats
-        </Link>
-        <Link href="/display" className="text-sm text-neutral-500 hover:text-neutral-200">
-          display
-        </Link>
-      </div>
-      <CaregiverPill value={caregiver} onChange={pickCaregiver} />
-      {!caregiver ? null : (
-        <div className="flex-1 px-5 pb-10 flex flex-col gap-8">
+    <div className="min-h-[100dvh] bg-neutral-950 text-neutral-100">
+      <div className="w-full max-w-md mx-auto px-4 pt-3 pb-24 safe-pb">
+        <div className="flex justify-between items-center">
+          <span className="text-lg font-semibold tracking-tight">AraTrack</span>
+          <div className="flex gap-4 text-sm text-neutral-500">
+            <Link href="/dashboard" className="hover:text-neutral-200">stats</Link>
+            <Link href="/display" className="hover:text-neutral-200">display</Link>
+          </div>
+        </div>
+        <CaregiverPill value={caregiver} onChange={pickCaregiver} />
+        {caregiver && (
+          <div className="flex flex-col gap-5">
           <section className="bg-neutral-900 rounded-3xl p-6">
             <h2 className="text-xl font-semibold mb-4">Feed</h2>
             <div className="flex items-end justify-center gap-2 mb-4">
@@ -157,11 +157,11 @@ export default function LogPage() {
               </button>
             </div>
           </section>
-        </div>
-      )}
-
+          </div>
+        )}
+      </div>
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-black px-5 py-3 rounded-full text-sm font-semibold success-flash">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-black px-5 py-3 rounded-full text-sm font-semibold success-flash max-w-[90vw] text-center">
           {toast}
         </div>
       )}

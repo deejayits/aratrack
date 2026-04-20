@@ -120,61 +120,61 @@ export default function DisplayPage() {
   }, [feedTone, lastFeed, soundOn]);
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-neutral-950 text-neutral-100 flex flex-col p-10">
-      <header className="flex items-baseline justify-between mb-8">
+    <div className="min-h-[100dvh] lg:h-screen w-screen lg:overflow-hidden bg-neutral-950 text-neutral-100 flex flex-col p-4 md:p-6 lg:p-10">
+      <header className="flex items-start justify-between mb-4 md:mb-8 gap-3 flex-wrap">
         <div>
-          <div className="text-5xl font-bold tracking-tight">AraTrack</div>
-          <div className="text-xl text-neutral-400 mt-1">Aradhya</div>
+          <div className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">AraTrack</div>
+          <div className="text-sm md:text-lg lg:text-xl text-neutral-400 mt-0.5 md:mt-1">Aradhya</div>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2 md:gap-3 lg:gap-6 flex-wrap justify-end">
           <button
             onClick={() => {
               setSoundOn((v) => !v);
               if (!soundOn) playAlert();
             }}
-            className={`text-lg px-4 py-2 rounded-full border ${
+            className={`text-xs md:text-base lg:text-lg px-2.5 md:px-4 py-1.5 md:py-2 rounded-full border ${
               soundOn ? "border-emerald-500 text-emerald-400" : "border-neutral-700 text-neutral-500"
             }`}
             aria-label="Toggle alert sound"
           >
-            {soundOn ? "🔔 Alerts on" : "🔕 Alerts off"}
+            {soundOn ? "🔔 On" : "🔕 Off"}
           </button>
           <Link
             href="/dashboard"
-            className="text-lg px-4 py-2 rounded-full border border-neutral-700 text-neutral-400 hover:text-neutral-100"
+            className="text-xs md:text-base lg:text-lg px-2.5 md:px-4 py-1.5 md:py-2 rounded-full border border-neutral-700 text-neutral-400 hover:text-neutral-100"
           >
             Stats
           </Link>
           <Link
             href="/log"
-            className="text-lg px-4 py-2 rounded-full border border-neutral-700 text-neutral-400 hover:text-neutral-100"
+            className="text-xs md:text-base lg:text-lg px-2.5 md:px-4 py-1.5 md:py-2 rounded-full border border-neutral-700 text-neutral-400 hover:text-neutral-100"
           >
             Log
           </Link>
-          <div className="text-6xl font-semibold tabular-nums">{clock}</div>
+          <div className="text-3xl md:text-5xl lg:text-6xl font-semibold tabular-nums">{clock}</div>
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-8 flex-1 min-h-0">
-        <section className="bg-neutral-900 rounded-3xl p-10 flex flex-col">
-          <div className="text-2xl text-neutral-400 mb-3">Last Feed</div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8 lg:flex-1 lg:min-h-0">
+        <section className="bg-neutral-900 rounded-3xl p-5 md:p-8 lg:p-10 flex flex-col">
+          <div className="text-base md:text-xl lg:text-2xl text-neutral-400 mb-2 md:mb-3">Last Feed</div>
           {lastFeed ? (
             <>
-              <div className={`text-7xl font-bold ${toneText[feedTone]}`}>
+              <div className={`text-4xl md:text-6xl lg:text-7xl font-bold ${toneText[feedTone]}`}>
                 {elapsedLabel(new Date(lastFeed.logged_at), now)}
               </div>
-              <div className="text-4xl mt-4">{fmtOz(lastFeed.quantity_oz ?? 0)} oz</div>
-              <div className="text-2xl text-neutral-400 mt-2">
+              <div className="text-2xl md:text-3xl lg:text-4xl mt-2 md:mt-4">{fmtOz(lastFeed.quantity_oz ?? 0)} oz</div>
+              <div className="text-base md:text-xl lg:text-2xl text-neutral-400 mt-1 md:mt-2">
                 by {lastFeed.logged_by}
               </div>
-              <div className="mt-auto">
-                <div className="flex justify-between text-xl text-neutral-400 mb-2">
+              <div className="mt-4 lg:mt-auto">
+                <div className="flex justify-between text-sm md:text-lg lg:text-xl text-neutral-400 mb-2">
                   <span>Next feed window</span>
                   <span>
                     {feedAgoMin ?? 0}m / {FEED_INTERVAL_MINUTES}m
                   </span>
                 </div>
-                <div className="w-full h-5 rounded-full bg-neutral-800 overflow-hidden">
+                <div className="w-full h-3 md:h-5 rounded-full bg-neutral-800 overflow-hidden">
                   <div
                     className={`h-full ${toneBar[feedTone]} transition-all duration-500`}
                     style={{ width: `${feedPct}%` }}
@@ -183,33 +183,33 @@ export default function DisplayPage() {
               </div>
             </>
           ) : (
-            <div className="text-4xl text-neutral-500">No feeds yet</div>
+            <div className="text-2xl md:text-4xl text-neutral-500">No feeds yet</div>
           )}
         </section>
 
-        <section className="bg-neutral-900 rounded-3xl p-10 flex flex-col">
-          <div className="text-2xl text-neutral-400 mb-3">Last Diaper</div>
+        <section className="bg-neutral-900 rounded-3xl p-5 md:p-8 lg:p-10 flex flex-col">
+          <div className="text-base md:text-xl lg:text-2xl text-neutral-400 mb-2 md:mb-3">Last Diaper</div>
           {lastDiaper ? (
             <>
-              <div className="text-7xl font-bold text-sky-300">
+              <div className="text-4xl md:text-6xl lg:text-7xl font-bold text-sky-300">
                 {elapsedLabel(new Date(lastDiaper.logged_at), now)}
               </div>
-              <div className="text-4xl mt-4 capitalize">{lastDiaper.subtype}</div>
-              <div className="text-2xl text-neutral-400 mt-2">
+              <div className="text-2xl md:text-3xl lg:text-4xl mt-2 md:mt-4 capitalize">{lastDiaper.subtype}</div>
+              <div className="text-base md:text-xl lg:text-2xl text-neutral-400 mt-1 md:mt-2">
                 by {lastDiaper.logged_by}
               </div>
             </>
           ) : (
-            <div className="text-4xl text-neutral-500">No diapers yet</div>
+            <div className="text-2xl md:text-4xl text-neutral-500">No diapers yet</div>
           )}
         </section>
       </div>
 
-      <section className="mt-8 bg-neutral-900 rounded-3xl p-6 flex-shrink-0">
-        <div className="text-xl text-neutral-400 mb-3">Recent activity</div>
-        <div className="grid grid-cols-4 gap-x-6 gap-y-2">
+      <section className="mt-4 md:mt-6 lg:mt-8 bg-neutral-900 rounded-3xl p-4 md:p-6 flex-shrink-0">
+        <div className="text-base md:text-xl text-neutral-400 mb-2 md:mb-3">Recent activity</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
           {events.slice(0, 8).map((e) => (
-            <div key={e.id} className="flex items-center gap-3 text-lg">
+            <div key={e.id} className="flex items-center gap-3 text-sm md:text-base lg:text-lg">
               <span
                 className={`w-2.5 h-2.5 rounded-full ${
                   e.event_type === "feed" ? "bg-emerald-400" : "bg-sky-400"
@@ -227,7 +227,7 @@ export default function DisplayPage() {
             </div>
           ))}
           {events.length === 0 && (
-            <div className="text-neutral-500 col-span-4">Nothing logged yet.</div>
+            <div className="text-neutral-500 md:col-span-2 lg:col-span-4">Nothing logged yet.</div>
           )}
         </div>
       </section>

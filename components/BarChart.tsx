@@ -44,7 +44,7 @@ export function BarChart({
           );
         })}
       </svg>
-      <div className="grid text-xs text-neutral-500" style={{ gridTemplateColumns: `repeat(${data.length}, 1fr)` }}>
+      <div className="grid text-[10px] md:text-xs text-neutral-500 mt-1" style={{ gridTemplateColumns: `repeat(${data.length}, 1fr)` }}>
         {data.map((d, i) => (
           <div key={i} className="text-center truncate px-0.5">
             {d.label}
