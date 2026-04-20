@@ -16,7 +16,7 @@ export type EventRow = {
   id: string;
   event_type: "feed" | "diaper";
   subtype: "wet" | "dirty" | "both" | null;
-  quantity_ml: number | null;
+  quantity_oz: number | null;
   logged_at: string;
   logged_by: string;
 };

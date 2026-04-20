@@ -1,24 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PinGate } from "@/components/PinGate";
+import Link from "next/link";
 import { CaregiverPill } from "@/components/CaregiverPill";
 import { supabase } from "@/lib/supabase";
 import type { Caregiver } from "@/lib/constants";
 
 const CAREGIVER_KEY = "aratrack.caregiver";
+const round1 = (n: number) => Math.round(n * 10) / 10;
+const fmtOz = (n: number) => (Number.isInteger(n) ? `${n}` : n.toFixed(1));
 
 export default function LogPage() {
-  return (
-    <PinGate>
-      <LogUI />
-    </PinGate>
-  );
-}
-
-function LogUI() {
   const [caregiver, setCaregiver] = useState<Caregiver | null>(null);
-  const [ml, setMl] = useState(0);
+  const [oz, setOz] = useState(0);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -35,44 +29,65 @@ function LogUI() {
 
   const flash = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 1400);
+    setTimeout(() => setToast(null), 2400);
+  };
+
+  const handleError = (err: unknown) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/fetch/i.test(msg) || /NetworkError/i.test(msg)) {
+      flash("Can't reach Supabase — check .env.local");
+    } else {
+      flash(`Error: ${msg}`);
+    }
   };
 
   const logFeed = async () => {
-    if (!caregiver || ml <= 0 || busy) return;
+    if (!caregiver || oz <= 0 || busy) return;
     setBusy(true);
-    const { error } = await supabase.from("events").insert({
-      event_type: "feed",
-      quantity_ml: ml,
-      logged_by: caregiver,
-    });
-    setBusy(false);
-    if (error) {
-      flash(`Error: ${error.message}`);
-      return;
+    try {
+      const { error } = await supabase.from("events").insert({
+        event_type: "feed",
+        quantity_oz: oz,
+        logged_by: caregiver,
+      });
+      if (error) throw error;
+      flash(`Logged ${fmtOz(oz)} oz feed`);
+      setOz(0);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setBusy(false);
     }
-    flash(`Logged ${ml}ml feed`);
-    setMl(0);
   };
 
   const logDiaper = async (subtype: "wet" | "dirty" | "both") => {
     if (!caregiver || busy) return;
     setBusy(true);
-    const { error } = await supabase.from("events").insert({
-      event_type: "diaper",
-      subtype,
-      logged_by: caregiver,
-    });
-    setBusy(false);
-    if (error) {
-      flash(`Error: ${error.message}`);
-      return;
+    try {
+      const { error } = await supabase.from("events").insert({
+        event_type: "diaper",
+        subtype,
+        logged_by: caregiver,
+      });
+      if (error) throw error;
+      flash(`Logged ${subtype} diaper`);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setBusy(false);
     }
-    flash(`Logged ${subtype} diaper`);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-neutral-950 text-neutral-100">
+      <div className="flex justify-end px-5 pt-4 gap-3">
+        <Link href="/dashboard" className="text-sm text-neutral-500 hover:text-neutral-200">
+          stats
+        </Link>
+        <Link href="/display" className="text-sm text-neutral-500 hover:text-neutral-200">
+          display
+        </Link>
+      </div>
       <CaregiverPill value={caregiver} onChange={pickCaregiver} />
       {!caregiver ? null : (
         <div className="flex-1 px-5 pb-10 flex flex-col gap-8">
@@ -81,28 +96,30 @@ function LogUI() {
             <div className="flex items-end justify-center gap-2 mb-4">
               <input
                 type="number"
-                inputMode="numeric"
-                value={ml === 0 ? "" : ml}
-                onChange={(e) => setMl(Math.max(0, parseInt(e.target.value || "0", 10) || 0))}
+                inputMode="decimal"
+                step="0.5"
+                min="0"
+                value={oz === 0 ? "" : oz}
+                onChange={(e) => setOz(Math.max(0, round1(parseFloat(e.target.value || "0") || 0)))}
                 placeholder="0"
                 className="w-40 text-center text-5xl font-semibold bg-transparent outline-none border-b-2 border-neutral-700 focus:border-emerald-400 pb-1"
               />
-              <span className="text-2xl text-neutral-400 pb-2">ml</span>
+              <span className="text-2xl text-neutral-400 pb-2">oz</span>
             </div>
             <div className="grid grid-cols-3 gap-2 mb-5">
-              {[10, 20, 30].map((n) => (
+              {[0.5, 1, 2].map((n) => (
                 <button
                   key={n}
-                  onClick={() => setMl((m) => m + n)}
+                  onClick={() => setOz((o) => round1(o + n))}
                   className="h-12 rounded-xl bg-neutral-800 active:bg-neutral-700 text-lg font-medium"
                 >
-                  +{n}
+                  +{fmtOz(n)}
                 </button>
               ))}
             </div>
             <button
               onClick={logFeed}
-              disabled={ml <= 0 || busy}
+              disabled={oz <= 0 || busy}
               className="w-full h-16 rounded-2xl bg-emerald-500 disabled:bg-neutral-800 disabled:text-neutral-500 text-black font-semibold text-lg active:bg-emerald-400"
             >
               Log Feed

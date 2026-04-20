@@ -1,14 +1,43 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { supabase, type EventRow } from "@/lib/supabase";
 import { FEED_INTERVAL_MINUTES } from "@/lib/constants";
 import { clockLabel, elapsedLabel } from "@/lib/time";
+
+const fmtOz = (n: number) => (Number.isInteger(n) ? `${n}` : n.toFixed(1));
+
+function playAlert() {
+  try {
+    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const now = ctx.currentTime;
+    [0, 0.35, 0.7].forEach((offset) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      gain.gain.setValueAtTime(0.0001, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + offset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.25);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.3);
+    });
+    setTimeout(() => ctx.close(), 1500);
+  } catch {
+    // ignore
+  }
+}
 
 export default function DisplayPage() {
   const [events, setEvents] = useState<EventRow[]>([]);
   const [now, setNow] = useState<Date>(() => new Date());
   const [clock, setClock] = useState<string>("");
+  const [soundOn, setSoundOn] = useState(false);
+  const alertedRef = useRef<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -82,6 +111,14 @@ export default function DisplayPage() {
     neutral: "text-neutral-400",
   };
 
+  useEffect(() => {
+    if (!soundOn) return;
+    if (feedTone !== "red" || !lastFeed) return;
+    if (alertedRef.current === lastFeed.id) return;
+    alertedRef.current = lastFeed.id;
+    playAlert();
+  }, [feedTone, lastFeed, soundOn]);
+
   return (
     <div className="h-screen w-screen overflow-hidden bg-neutral-950 text-neutral-100 flex flex-col p-10">
       <header className="flex items-baseline justify-between mb-8">
@@ -89,7 +126,33 @@ export default function DisplayPage() {
           <div className="text-5xl font-bold tracking-tight">AraTrack</div>
           <div className="text-xl text-neutral-400 mt-1">Aradhya</div>
         </div>
-        <div className="text-6xl font-semibold tabular-nums">{clock}</div>
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => {
+              setSoundOn((v) => !v);
+              if (!soundOn) playAlert();
+            }}
+            className={`text-lg px-4 py-2 rounded-full border ${
+              soundOn ? "border-emerald-500 text-emerald-400" : "border-neutral-700 text-neutral-500"
+            }`}
+            aria-label="Toggle alert sound"
+          >
+            {soundOn ? "🔔 Alerts on" : "🔕 Alerts off"}
+          </button>
+          <Link
+            href="/dashboard"
+            className="text-lg px-4 py-2 rounded-full border border-neutral-700 text-neutral-400 hover:text-neutral-100"
+          >
+            Stats
+          </Link>
+          <Link
+            href="/log"
+            className="text-lg px-4 py-2 rounded-full border border-neutral-700 text-neutral-400 hover:text-neutral-100"
+          >
+            Log
+          </Link>
+          <div className="text-6xl font-semibold tabular-nums">{clock}</div>
+        </div>
       </header>
 
       <div className="grid grid-cols-2 gap-8 flex-1 min-h-0">
@@ -100,7 +163,7 @@ export default function DisplayPage() {
               <div className={`text-7xl font-bold ${toneText[feedTone]}`}>
                 {elapsedLabel(new Date(lastFeed.logged_at), now)}
               </div>
-              <div className="text-4xl mt-4">{lastFeed.quantity_ml ?? 0} ml</div>
+              <div className="text-4xl mt-4">{fmtOz(lastFeed.quantity_oz ?? 0)} oz</div>
               <div className="text-2xl text-neutral-400 mt-2">
                 by {lastFeed.logged_by}
               </div>
@@ -153,7 +216,9 @@ export default function DisplayPage() {
                 }`}
               />
               <span className="font-medium">
-                {e.event_type === "feed" ? `${e.quantity_ml}ml feed` : `${e.subtype} diaper`}
+                {e.event_type === "feed"
+                  ? `${fmtOz(e.quantity_oz ?? 0)} oz feed`
+                  : `${e.subtype} diaper`}
               </span>
               <span className="text-neutral-500 ml-auto">{e.logged_by}</span>
               <span className="text-neutral-500 w-24 text-right">

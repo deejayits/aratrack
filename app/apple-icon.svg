@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <rect width="180" height="180" rx="40" fill="#0a0a0a"/>
+  <circle cx="90" cy="72" r="32" fill="#34d399"/>
+  <rect x="50" y="112" width="80" height="28" rx="14" fill="#38bdf8"/>
+  <text x="90" y="166" text-anchor="middle" font-family="ui-rounded,system-ui,sans-serif" font-size="24" font-weight="700" fill="#f5f5f5">AraTrack</text>
+</svg>
