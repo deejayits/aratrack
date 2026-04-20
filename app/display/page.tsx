@@ -5,6 +5,8 @@ import Link from "next/link";
 import { supabase, type EventRow } from "@/lib/supabase";
 import { FEED_INTERVAL_MINUTES } from "@/lib/constants";
 import { clockLabel, elapsedLabel } from "@/lib/time";
+import { eventsOnDay, predictedNextFeed } from "@/lib/stats";
+import { TimelineBar } from "@/components/TimelineBar";
 
 const fmtOz = (n: number) => (Number.isInteger(n) ? `${n}` : n.toFixed(1));
 
@@ -61,7 +63,15 @@ export default function DisplayPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "events" },
         (payload) => {
-          setEvents((prev) => [payload.new as EventRow, ...prev].slice(0, 30));
+          setEvents((prev) => [payload.new as EventRow, ...prev].slice(0, 60));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "events" },
+        (payload) => {
+          const id = (payload.old as { id?: string }).id;
+          if (id) setEvents((prev) => prev.filter((e) => e.id !== id));
         },
       )
       .subscribe();
@@ -83,6 +93,17 @@ export default function DisplayPage() {
 
   const lastFeed = useMemo(() => events.find((e) => e.event_type === "feed"), [events]);
   const lastDiaper = useMemo(() => events.find((e) => e.event_type === "diaper"), [events]);
+  const predicted = useMemo(() => predictedNextFeed(events, FEED_INTERVAL_MINUTES), [events]);
+  const todayEvents = useMemo(() => eventsOnDay(events, now), [events, now]);
+  const predictedLabel = useMemo(() => {
+    if (!predicted) return null;
+    const diffMin = Math.round((predicted.getTime() - now.getTime()) / 60000);
+    const clock = predicted.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    if (diffMin < -5) return `~${clock} (overdue ${Math.abs(diffMin)}m)`;
+    if (diffMin < 0) return `~${clock} (now)`;
+    if (diffMin < 60) return `~${clock} (in ${diffMin}m)`;
+    return `~${clock} (in ${Math.floor(diffMin / 60)}h ${diffMin % 60}m)`;
+  }, [predicted, now]);
 
   const feedAgoMin = lastFeed
     ? Math.floor((now.getTime() - new Date(lastFeed.logged_at).getTime()) / 60000)
@@ -192,6 +213,11 @@ export default function DisplayPage() {
                     style={{ width: `${feedPct}%` }}
                   />
                 </div>
+                {predictedLabel && (
+                  <div className="mt-3 text-sm md:text-lg lg:text-xl text-neutral-400">
+                    Next expected <span className="text-neutral-100 font-medium">{predictedLabel}</span>
+                  </div>
+                )}
               </div>
             </>
           ) : (
@@ -218,6 +244,17 @@ export default function DisplayPage() {
       </div>
 
       <section className="mt-4 md:mt-6 lg:mt-8 bg-neutral-900 rounded-3xl p-4 md:p-6 flex-shrink-0">
+        <div className="flex items-center justify-between mb-2 md:mb-3">
+          <div className="text-base md:text-xl text-neutral-400">Today</div>
+          <div className="text-xs md:text-sm text-neutral-500 tabular-nums">
+            {todayEvents.filter((e) => e.event_type === "feed").length} feeds ·{" "}
+            {todayEvents.filter((e) => e.event_type === "diaper").length} diapers
+          </div>
+        </div>
+        <TimelineBar events={todayEvents} now={now} />
+      </section>
+
+      <section className="mt-4 md:mt-6 bg-neutral-900 rounded-3xl p-4 md:p-6 flex-shrink-0">
         <div className="text-base md:text-xl text-neutral-400 mb-2 md:mb-3">Recent activity</div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-2">
           {events.slice(0, 8).map((e) => (

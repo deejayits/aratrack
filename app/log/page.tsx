@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CaregiverPill } from "@/components/CaregiverPill";
-import { supabase } from "@/lib/supabase";
+import { deleteEvent, makeEvent, submitEvent } from "@/lib/offline";
 import type { Caregiver } from "@/lib/constants";
 
 const CAREGIVER_KEY = "aratrack.caregiver";
+const UNDO_WINDOW_MS = 6000;
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const fmtOz = (n: number) => (Number.isInteger(n) ? `${n}` : n.toFixed(1));
+
+type Toast = { msg: string; lastId?: string; queued?: boolean };
 
 export default function LogPage() {
   const [caregiver, setCaregiver] = useState<Caregiver | null>(null);
   const [oz, setOz] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const toastTimer = useRef<number | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem(CAREGIVER_KEY) as Caregiver | null;
@@ -27,60 +31,48 @@ export default function LogPage() {
     setCaregiver(c);
   };
 
-  const flash = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2400);
+  const showToast = (t: Toast, ms = UNDO_WINDOW_MS) => {
+    setToast(t);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), ms);
   };
 
-  const handleError = (err: unknown) => {
-    let msg = "Unknown error";
-    if (err instanceof Error) msg = err.message;
-    else if (typeof err === "string") msg = err;
-    else if (err && typeof err === "object" && "message" in err) {
-      msg = String((err as { message: unknown }).message);
+  const submit = async (event: ReturnType<typeof makeEvent>, label: string) => {
+    if (busy) return;
+    setBusy(true);
+    const res = await submitEvent(event);
+    setBusy(false);
+    if (!res.ok) {
+      showToast({ msg: `Error: ${res.error ?? "unknown"}` }, 3000);
+      return;
     }
-    if (/fetch/i.test(msg) || /ERR_CONNECTION/i.test(msg) || /NetworkError/i.test(msg)) {
-      flash("Can't reach Supabase — check .env.local + restart dev");
-    } else {
-      flash(`Error: ${msg}`);
-    }
+    showToast({
+      msg: res.queued ? `${label} · queued (offline)` : label,
+      lastId: res.queued ? undefined : event.id,
+      queued: res.queued,
+    });
   };
 
   const logFeed = async () => {
-    if (!caregiver || oz <= 0 || busy) return;
-    setBusy(true);
-    try {
-      const { error } = await supabase.from("events").insert({
-        event_type: "feed",
-        quantity_oz: oz,
-        logged_by: caregiver,
-      });
-      if (error) throw error;
-      flash(`Logged ${fmtOz(oz)} oz feed`);
-      setOz(0);
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setBusy(false);
-    }
+    if (!caregiver || oz <= 0) return;
+    const evt = makeEvent({ event_type: "feed", quantity_oz: oz, logged_by: caregiver });
+    await submit(evt, `Logged ${fmtOz(oz)} oz feed`);
+    setOz(0);
   };
 
   const logDiaper = async (subtype: "wet" | "dirty" | "both") => {
-    if (!caregiver || busy) return;
-    setBusy(true);
-    try {
-      const { error } = await supabase.from("events").insert({
-        event_type: "diaper",
-        subtype,
-        logged_by: caregiver,
-      });
-      if (error) throw error;
-      flash(`Logged ${subtype} diaper`);
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setBusy(false);
-    }
+    if (!caregiver) return;
+    const evt = makeEvent({ event_type: "diaper", subtype, logged_by: caregiver });
+    await submit(evt, `Logged ${subtype} diaper`);
+  };
+
+  const undoLast = async () => {
+    if (!toast?.lastId) return;
+    const id = toast.lastId;
+    setToast(null);
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    const res = await deleteEvent(id);
+    showToast({ msg: res.ok ? "Undone" : `Couldn't undo: ${res.error}` }, 2000);
   };
 
   return (
@@ -161,8 +153,16 @@ export default function LogPage() {
         )}
       </div>
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-black px-5 py-3 rounded-full text-sm font-semibold success-flash max-w-[90vw] text-center">
-          {toast}
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-emerald-500 text-black px-4 py-3 rounded-full text-sm font-semibold success-flash max-w-[90vw] shadow-lg">
+          <span className="truncate">{toast.msg}</span>
+          {toast.lastId && (
+            <button
+              onClick={undoLast}
+              className="ml-2 px-3 py-1 rounded-full bg-black/20 hover:bg-black/30 text-black text-xs font-semibold"
+            >
+              Undo
+            </button>
+          )}
         </div>
       )}
     </div>

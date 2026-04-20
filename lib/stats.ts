@@ -64,3 +64,49 @@ export function avgFeedIntervalMinutes(events: EventRow[]): number | null {
   for (let i = 1; i < feeds.length; i++) gaps.push((feeds[i] - feeds[i - 1]) / 60000);
   return Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length);
 }
+
+export function predictedNextFeed(
+  events: EventRow[],
+  fallbackMinutes: number,
+): Date | null {
+  const feeds = events
+    .filter((e) => e.event_type === "feed")
+    .map((e) => new Date(e.logged_at).getTime())
+    .sort((a, b) => b - a);
+  if (feeds.length === 0) return null;
+  const lastFeed = feeds[0];
+  const recent = feeds.slice(0, 6);
+  if (recent.length < 2) return new Date(lastFeed + fallbackMinutes * 60000);
+  const gaps: number[] = [];
+  for (let i = 0; i < recent.length - 1; i++) gaps.push((recent[i] - recent[i + 1]) / 60000);
+  const avg = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+  const blended = avg * 0.7 + fallbackMinutes * 0.3;
+  return new Date(lastFeed + blended * 60000);
+}
+
+export function eventsOnDay(events: EventRow[], day: Date): EventRow[] {
+  const start = new Date(day);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return events.filter((e) => {
+    const t = new Date(e.logged_at).getTime();
+    return t >= start.getTime() && t < end.getTime();
+  });
+}
+
+export function toCsv(events: EventRow[]): string {
+  const header = ["logged_at", "event_type", "subtype", "quantity_oz", "logged_by"];
+  const rows = events.map((e) =>
+    [
+      new Date(e.logged_at).toISOString(),
+      e.event_type,
+      e.subtype ?? "",
+      e.quantity_oz == null ? "" : String(e.quantity_oz),
+      e.logged_by.replace(/"/g, '""'),
+    ]
+      .map((v) => (/[",\n]/.test(v) ? `"${v}"` : v))
+      .join(","),
+  );
+  return [header.join(","), ...rows].join("\n");
+}

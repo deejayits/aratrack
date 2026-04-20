@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ConfigBanner } from "@/components/ConfigBanner";
+import { OfflineBadge } from "@/components/OfflineBadge";
 
 export const metadata: Metadata = {
   title: "AraTrack",
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body className="font-display">
         <ConfigBanner />
+        <OfflineBadge />
         {children}
       </body>
     </html>

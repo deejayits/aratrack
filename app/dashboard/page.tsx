@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase, type EventRow } from "@/lib/supabase";
 import { BarChart } from "@/components/BarChart";
-import { avgFeedIntervalMinutes, bucketByDay } from "@/lib/stats";
+import { avgFeedIntervalMinutes, bucketByDay, toCsv } from "@/lib/stats";
 import { elapsedLabel } from "@/lib/time";
+import { deleteEvent } from "@/lib/offline";
 
 const fmtOz = (n: number) => (Number.isInteger(n) ? `${n}` : n.toFixed(1));
 
@@ -40,6 +41,10 @@ export default function DashboardPage() {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "events" }, (payload) => {
         setEvents((prev) => [payload.new as EventRow, ...prev]);
       })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "events" }, (payload) => {
+        const id = (payload.old as { id?: string }).id;
+        if (id) setEvents((prev) => prev.filter((e) => e.id !== id));
+      })
       .subscribe();
 
     return () => {
@@ -47,6 +52,24 @@ export default function DashboardPage() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const handleDelete = async (id: string) => {
+    const prev = events;
+    setEvents((cur) => cur.filter((e) => e.id !== id));
+    const res = await deleteEvent(id);
+    if (!res.ok) setEvents(prev);
+  };
+
+  const exportCsv = () => {
+    const csv = toCsv(events);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `aratrack-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const days7 = useMemo(() => bucketByDay(events, 7), [events]);
   const today = days7[days7.length - 1];
@@ -69,7 +92,14 @@ export default function DashboardPage() {
           <div className="text-2xl md:text-3xl font-bold">Stats</div>
           <div className="text-xs md:text-sm text-neutral-400">Last 14 days</div>
         </div>
-        <div className="flex gap-2 md:gap-3">
+        <div className="flex gap-2 md:gap-3 flex-wrap justify-end">
+          <button
+            onClick={exportCsv}
+            disabled={events.length === 0}
+            className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-neutral-700 disabled:opacity-40"
+          >
+            ⬇ CSV
+          </button>
           <Link href="/log" className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full border border-neutral-700">
             Log
           </Link>
@@ -128,7 +158,7 @@ export default function DashboardPage() {
             <div className="text-sm text-neutral-400 mb-3">Recent events</div>
             <div className="divide-y divide-neutral-800">
               {events.slice(0, 25).map((e) => (
-                <div key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                <div key={e.id} className="flex items-center gap-3 py-2 text-sm group">
                   <span
                     className={`w-2 h-2 rounded-full ${e.event_type === "feed" ? "bg-emerald-400" : "bg-sky-400"}`}
                   />
@@ -137,8 +167,16 @@ export default function DashboardPage() {
                       ? `${fmtOz(e.quantity_oz ?? 0)} oz feed`
                       : `${e.subtype} diaper`}
                   </span>
-                  <span className="text-neutral-500 ml-auto">{e.logged_by}</span>
-                  <span className="text-neutral-500 w-24 text-right tabular-nums">
+                  <span className="text-neutral-500 ml-auto hidden sm:inline">{e.logged_by}</span>
+                  <button
+                    onClick={() => handleDelete(e.id)}
+                    className="text-neutral-600 hover:text-rose-400 px-2 text-xs opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                    aria-label="Delete event"
+                    title="Delete"
+                  >
+                    ×
+                  </button>
+                  <span className="text-neutral-500 w-20 md:w-24 text-right tabular-nums">
                     {elapsedLabel(new Date(e.logged_at))}
                   </span>
                 </div>

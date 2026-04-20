@@ -1,0 +1,44 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "ara track",
+      "intents": [
+        { "name": "AMAZON.CancelIntent", "samples": [] },
+        { "name": "AMAZON.HelpIntent", "samples": [] },
+        { "name": "AMAZON.StopIntent", "samples": [] },
+        {
+          "name": "LogFeedIntent",
+          "slots": [{ "name": "ounces", "type": "AMAZON.NUMBER" }],
+          "samples": [
+            "log a feed of {ounces} ounces",
+            "log feed {ounces} ounces",
+            "record a feed of {ounces} ounces",
+            "she had {ounces} ounces",
+            "{ounces} ounce feed",
+            "{ounces} ounces"
+          ]
+        },
+        {
+          "name": "LogDiaperIntent",
+          "slots": [{ "name": "type", "type": "DiaperType" }],
+          "samples": [
+            "log a {type} diaper",
+            "record a {type} diaper",
+            "diaper {type}",
+            "{type} diaper"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "DiaperType",
+          "values": [
+            { "name": { "value": "wet" } },
+            { "name": { "value": "dirty" } },
+            { "name": { "value": "both" } }
+          ]
+        }
+      ]
+    }
+  }
+}
