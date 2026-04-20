@@ -12,10 +12,16 @@
           "samples": [
             "log a feed of {ounces} ounces",
             "log feed {ounces} ounces",
+            "log feed {ounces}",
+            "log {ounces} ounces",
+            "log {ounces} ounce feed",
             "record a feed of {ounces} ounces",
             "she had {ounces} ounces",
+            "she drank {ounces} ounces",
+            "baby had {ounces} ounces",
             "{ounces} ounce feed",
-            "{ounces} ounces"
+            "{ounces} ounces",
+            "{ounces} oz"
           ]
         },
         {
@@ -23,9 +29,13 @@
           "slots": [{ "name": "type", "type": "DiaperType" }],
           "samples": [
             "log a {type} diaper",
+            "log {type} diaper",
+            "log {type} diaper change",
             "record a {type} diaper",
             "diaper {type}",
-            "{type} diaper"
+            "{type} diaper",
+            "{type} diaper change",
+            "baby had a {type} diaper"
           ]
         }
       ],
@@ -33,9 +43,30 @@
         {
           "name": "DiaperType",
           "values": [
-            { "name": { "value": "wet" } },
-            { "name": { "value": "dirty" } },
-            { "name": { "value": "both" } }
+            {
+              "name": {
+                "value": "wet",
+                "synonyms": ["pee", "peed", "pee pee", "wee", "urine", "number one", "number 1"]
+              }
+            },
+            {
+              "name": {
+                "value": "dirty",
+                "synonyms": ["poop", "pooped", "poopy", "poo", "stool", "number two", "number 2"]
+              }
+            },
+            {
+              "name": {
+                "value": "both",
+                "synonyms": [
+                  "pee and poop",
+                  "wet and dirty",
+                  "both pee and poop",
+                  "everything",
+                  "the works"
+                ]
+              }
+            }
           ]
         }
       ]
