@@ -33,9 +33,14 @@ export default function LogPage() {
   };
 
   const handleError = (err: unknown) => {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (/fetch/i.test(msg) || /NetworkError/i.test(msg)) {
-      flash("Can't reach Supabase — check .env.local");
+    let msg = "Unknown error";
+    if (err instanceof Error) msg = err.message;
+    else if (typeof err === "string") msg = err;
+    else if (err && typeof err === "object" && "message" in err) {
+      msg = String((err as { message: unknown }).message);
+    }
+    if (/fetch/i.test(msg) || /ERR_CONNECTION/i.test(msg) || /NetworkError/i.test(msg)) {
+      flash("Can't reach Supabase — check .env.local + restart dev");
     } else {
       flash(`Error: ${msg}`);
     }

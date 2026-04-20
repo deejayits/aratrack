@@ -3,9 +3,13 @@ import { createClient } from "@supabase/supabase-js";
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!url || !anonKey) {
+export const supabaseConfigured = Boolean(url && anonKey);
+
+if (!supabaseConfigured && typeof window !== "undefined") {
   // eslint-disable-next-line no-console
-  console.warn("[AraTrack] Missing Supabase env vars — set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+  console.warn(
+    "[AraTrack] Missing Supabase env vars — set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+  );
 }
 
 export const supabase = createClient(url ?? "http://localhost", anonKey ?? "anon", {
